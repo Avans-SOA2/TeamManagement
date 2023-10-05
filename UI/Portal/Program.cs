@@ -1,5 +1,6 @@
 using Core.DomainServices;
 using Infrastructure;
+using Infrastructure.TMEF;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,11 +21,13 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => options.Sign
 builder.Services.AddAuthorization(options =>
     options.AddPolicy("TeamManagerOnly", policy => policy.RequireClaim("TeamManager")));
 
-builder.Services.AddScoped<IGameRepository, GameEFRepository>();
+builder.Services.AddScoped<IGameRepository, GameRestRepository>();
 builder.Services.AddScoped<ICoachRepository, CoachEFRepository>();
 builder.Services.AddScoped<IPlayerRepository, PlayerEFRepository>();
 builder.Services.AddScoped<IOpponentRepository, OpponentEFRepository>();
 builder.Services.AddScoped<ITeamRepository, TeamEFRepository>();
+
+builder.Services.AddHttpClient<GameRestRepository>(client => client.BaseAddress = new Uri(builder.Configuration["TM_WebAPI_URL"]));
 
 builder.Services.AddControllersWithViews();
 

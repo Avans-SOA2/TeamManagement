@@ -15,7 +15,8 @@ public class Game
     public DateTime PlayTime { get; set; }
 
     private DateTime? _departureTime;
-    
+    private bool _isHomeGame;
+
     /// <summary>
     /// Only necessary for not home games.
     /// Only the time part is relevant. The date part should always be
@@ -43,7 +44,7 @@ public class Game
     /// <summary>
     /// Home game?
     /// </summary>
-    public bool IsHomeGame { get; set; }
+    public bool IsHomeGame { get => _isHomeGame; set => _isHomeGame = value; }
 
     /// <summary>
     /// The primary coach for the game. Other coaches may assist,

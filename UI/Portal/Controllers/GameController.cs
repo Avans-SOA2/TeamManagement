@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Portal.Models;
 using Microsoft.EntityFrameworkCore;
+using CommunityToolkit.Diagnostics;
+
 
 namespace Portal.Controllers;
 
@@ -15,19 +17,25 @@ public class GameController : Controller
     private readonly ICoachRepository _coachRepository;
     private readonly IPlayerRepository _playerRepository;
     private readonly IOpponentRepository _opponentRepository;
-
+    private readonly ITeamRepository _teamRepository;
 
     public GameController(ILogger<HomeController> logger,
         IGameRepository gameRepository,
         ICoachRepository coachRepository,
         IPlayerRepository playerRepository,
-        IOpponentRepository opponentRepository)
+        IOpponentRepository opponentRepository,
+        ITeamRepository teamRepository)
     {
+        ArgumentException.ThrowIfNullOrEmpty(nameof(gameRepository));
+        Guard.IsNotNull(coachRepository); // <-- gebruikt CallerArgumentExpression (https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-10.0/caller-argument-expression)
+        //Guard.IsNotNull(coachRepository, nameof(coachRepository));
+
         _logger = logger;
         _gameRepository = gameRepository;
         _coachRepository = coachRepository;
         _playerRepository = playerRepository;
         _opponentRepository = opponentRepository ?? throw new ArgumentNullException(nameof(opponentRepository));
+        _teamRepository = teamRepository;
     }
 
     public IActionResult Index()
@@ -84,6 +92,21 @@ public class GameController : Controller
             {
                 var selectedCoach = _coachRepository.GetById(newGame.CoachId);
                 gameToCreate.Coach = selectedCoach;
+            }
+            else
+            {
+                var teams = _teamRepository.GetTeams();
+                var team = teams.FirstOrDefault(t => t.Name == "");
+                var selectedCoach = team.TeamHeadCoach ?? throw new Exception("Coach niet aanwezig");
+                gameToCreate.Coach = selectedCoach;
+                var players = _playerRepository.GetPlayers()
+                    .OrderBy(p => p.Games.Count)
+                    .Take(12)
+                    .ToList();
+                gameToCreate.Drivers = players
+                    .SelectMany(p => p.CareTakers.Where(c => c.HasCar))
+                    .ToList();
+
             }
 
             if (newGame.LaundryDutyId != -1)
